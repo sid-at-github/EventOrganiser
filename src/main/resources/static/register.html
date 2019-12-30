@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Event Organiser, Create Event</title>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+<link href="css/tooplate_style.css" rel="stylesheet" type="text/css" />
+
+<link rel="stylesheet" type="text/css" href="css/ddsmoothmenu.css" />
+
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/ddsmoothmenu.js"></script>
+
+<script type="text/javascript">
+
+ddsmoothmenu.init({
+	mainmenuid: "tooplate_menu",
+	orientation: 'h',
+	classname: 'ddsmoothmenu',
+	contentsource: "markup"
+})
+
+$(document).ready(function() {
+    if(window.localStorage.getItem('email') != null) {
+      $('#createEvent').show();
+      $('#manageEvent').show();
+      $('#archivedEvent').show();
+      $('#logout').show();
+    } else {
+      $('#signIn').show();
+    }
+});
+
+function logout() {
+  window.localStorage.clear();
+  location.reload();
+}
+
+function register() {
+    if($('#password').val().localeCompare($('#cPassword').val()) == 0) {
+      var registerFormData = {"email": $('#email').val(), "password": $('#password').val()};
+      $.ajax({
+        type: "POST",
+        url: "user",
+        data: JSON.stringify(registerFormData),
+        success: function(response) {
+          location.href = "signIn.html";
+        },
+        dataType: "json",
+        contentType : "application/json"
+      });
+    } else {
+      $('#cPasswordErrorMessage').show();
+    }
+
+}
+
+</script> 
+
+<style>
+    .alert {
+      padding: 20px;
+      background-color: #f44336;
+      color: white;
+      opacity: 1;
+      transition: opacity 0.6s;
+      margin-bottom: 15px;
+    }
+  .alert.error {background-color: #CF0F1A;}
+</style>
+</head>
+
+<body>
+<div id="tooplate_wrapper">
+    
+    <div id="tooplate_header">
+        <div id="site_title"><h1><a style="pointer-events: none; cursor: default;" href="#"></a></h1></div>
+        <div id="tooplate_menu" class="ddsmoothmenu">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li id="createEvent" style="display: none"><a href="createEvent.html">Create Event</a></li>
+                <li id="manageEvent" style="display: none"><a href="manageEvent.html">Manage Event</a></li>
+                <li id="archivedEvent" style="display: none"><a href="archivedEvent.html">Archived Event</a></li>
+                <li id="signIn" style="display: none"><a href="signIn.html">Sign In</a></li>
+                <li id="logout" style="display: none; cursor: pointer;" onclick="logout()"><a>Logout</a></li>
+            </ul>
+            <br style="clear: left" />
+        </div>
+    </div>
+    <div id="tooplate_main">
+        <div id="content" class="float_l">
+            <div id="contact_form">
+               <form id="eventForm" name="eventForm" onsubmit="register()">
+                    
+                    <label for="email">Email:</label> 
+                    <input type="text" id="email" name="email" class="required input_field" />
+                    <div class="cleaner h10"></div>
+
+                    <label for="password">Password:</label> 
+                    <input type="password" id="password" name="password" class="required input_field" />
+                    <div class="cleaner h10"></div>
+
+                    <label for="cPassword">Confirm Password:</label> 
+                    <input type="password" id="cPassword" name="cPassword" class="required input_field" />
+                    <div class="cleaner h10"></div>
+
+                    <input type="button" class="submit_btn" onclick="register()" value="Register" />
+
+                    <div id="cPasswordErrorMessage" class="alert error" style="display: none;">
+                    <strong>Error!</strong> Password and confirm password does not match.
+                    </div>
+                                        
+                </form>
+            </div>
+        </div>
+    </div>
+</div>    
+</body>
+</html>

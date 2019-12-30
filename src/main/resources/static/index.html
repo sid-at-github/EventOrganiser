@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Event Organiser</title>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+
+<link href="css/tooplate_style.css" rel="stylesheet" type="text/css" />
+
+<link rel="stylesheet" type="text/css" href="css/ddsmoothmenu.css" />
+
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/ddsmoothmenu.js">
+
+</script>
+
+<script type="text/javascript">
+
+ddsmoothmenu.init({
+	mainmenuid: "tooplate_menu",
+	orientation: 'h',
+	classname: 'ddsmoothmenu',
+	contentsource: "markup"
+})
+
+$(document).ready(function() {
+    if(window.localStorage.getItem('email') != null) {
+      $('#createEvent').show();
+      $('#manageEvent').show();
+      $('#archivedEvent').show();
+      $('#logout').show();
+      $.ajax({
+        type: "GET",
+        url: "event?user=" + window.localStorage.getItem('email'),
+        success: function(response) {
+          var eventList = JSON.parse(response);
+          if(eventList.length != 0) {
+              $('#eventList').append("<h5 style='font-size: 20px;'>Event List</h5>");
+              for (var i = 0, len = eventList.length; i < len; ++i) {
+                  var event = eventList[i];
+                  $('#eventList').append('<div class="rp_pp"> <span>'+ event.title + '</span> <p>' + event.description + '</p> <div class="cleaner"></div> <div>Location: ' + event.location + '  </div> <div>Date: ' + formatDate(new Date(event.date)) + '  </div> </div>');
+              }
+          } else {
+              $('#eventList').append('<div id="emptyMessage" class="alert empty" style="display: block;"> <strong>Empty!</strong> No events to display. </div> ');
+          }
+        }
+      });    
+    } else {
+      $('#signIn').show();
+      $('#eventList').append('<div id="emptyMessage" class="alert empty" style="display: block;"> <strong>Empty!</strong> No events to display. </div> ');
+    }
+});
+
+function searchEvent(elemt) {
+  var title = $(elemt).val();
+  $.ajax({
+    type: "GET",
+    url: "event?user=" + window.localStorage.getItem('email') + "&title=" + title,
+    success: function(response) {
+        var eventList = JSON.parse(response);
+        if(eventList.length != 0) {
+            $('#eventList').empty();
+            $('#eventList').append("<h5 style='font-size: 20px;'>Event List</h5>");
+            for (var i = 0, len = eventList.length; i < len; ++i) {
+                var event = eventList[i];
+                $('#eventList').append('<div class="rp_pp"> <span>'+ event.title + '</span> <p>' + event.description + '</p> <div class="cleaner"></div> <div>Location: ' + event.location + '  </div> <div>Date: ' + formatDate(new Date(event.date)) + '  </div> </div>');
+            }
+        } else {
+            $('#eventList').empty();
+            $('#eventList').append('<div id="emptyMessage" class="alert empty" style="display: block;"> <strong>Empty!</strong> No events to display. </div> ');
+        }
+    }
+  });
+}
+
+function logout() {
+  window.localStorage.clear();
+  location.reload();
+}
+
+function formatDate(date) {
+  var monthNames = [
+    "January", "February", "March",
+    "April", "May", "June", "July",
+    "August", "September", "October",
+    "November", "December"
+  ];
+
+  var day = date.getDate();
+  var monthIndex = date.getMonth();
+  var year = date.getFullYear();
+
+  return day + ' ' + monthNames[monthIndex] + ' ' + year;
+}
+
+</script> 
+<style>
+    .alert {
+      padding: 20px;
+      background-color: #f44336;
+      color: white;
+      opacity: 1;
+      transition: opacity 0.6s;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+  .alert.empty {background-color: #09C2D5;}
+  * {
+      box-sizing: border-box;
+    }
+
+  #searchEvent {
+    background-position: 10px 12px;
+    background-repeat: no-repeat;
+    width: 100%;
+    font-size: 16px;
+    padding: 12px 20px 12px 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 12px;
+  }
+
+</style>
+
+</head>
+
+<body>
+
+<div id="tooplate_wrapper">
+	
+    <div id="tooplate_header">
+        <div id="site_title"><h1><a style="pointer-events: none; cursor: default;" href="#"></a></h1></div>
+        <div id="tooplate_menu" class="ddsmoothmenu">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li id="createEvent" style="display: none"><a href="createEvent.html">Create Event</a></li>
+                <li id="manageEvent" style="display: none"><a href="manageEvent.html">Manage Event</a></li>
+                <li id="archivedEvent" style="display: none"><a href="archivedEvent.html">Archived Event</a></li>
+                <li id="signIn" style="display: none"><a href="signIn.html">Sign In</a></li>
+                <li id="logout" style="display: none; cursor: pointer;" onclick="logout()"><a>Logout</a></li>
+            </ul>
+            <br style="clear: left" />
+        </div>
+    </div>
+    
+    <div id="tooplate_main">
+            
+        <div class="cleaner h30"></div>
+        
+        <input type="text" id="searchEvent" onkeyup="searchEvent(this)" placeholder="Search for events..">
+
+        <div id="eventList">
+            
+        </div>
+                
+        <div class="cleaner"></div>
+	</div>
+    
+</div>
+
+
+</body>
+</html>

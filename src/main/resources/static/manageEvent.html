@@ -1,0 +1,260 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Event Organiser, Manage Event</title>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+
+<link href="css/tooplate_style.css" rel="stylesheet" type="text/css" />
+
+<link rel="stylesheet" type="text/css" href="css/ddsmoothmenu.css" />
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/ddsmoothmenu.js"></script>
+
+<script type="text/javascript">
+
+ddsmoothmenu.init({
+    mainmenuid: "tooplate_menu",
+    orientation: 'h',
+    classname: 'ddsmoothmenu',
+    contentsource: "markup"
+})
+
+function deleteEvent(eventId) {
+    var confirmed = confirm("Are you sure?");
+    if(confirmed) {
+      $.ajax({
+        type: "POST",
+        url: "event/" + eventId,
+        dataType: "json",
+        contentType : "application/json"
+      });
+      $('#event' + eventId).remove();
+      if($('.rp_pp').length == 0) {
+            $('#eventList').find("h5").remove();
+            $('#emptyMessage').show();
+      }
+    }
+}
+
+
+function edit(eventId) {
+  location.href = "editEvent.html?id=" + eventId;
+}
+
+function archiveEvent(eventId) {
+    var editedEvent = {"archived": true};
+    $.ajax({
+      type: "PUT",
+      url: "event/" + eventId,
+      data: JSON.stringify(editedEvent),
+      success: function(response) {
+        $('#archiveButton' + eventId).remove();
+        $('#event' + eventId).append('<input type="button" id="unarchiveButton' + eventId + '" class="submit_btn" onclick="unarchiveEvent(' + eventId + ')" value="Unarchive" /> ');
+      },
+      dataType: "json",
+      contentType : "application/json"
+    });
+}
+
+function unarchiveEvent(eventId) {
+    var editedEvent = {"archived": false};
+    $.ajax({
+      type: "PUT",
+      url: "event/" + eventId,
+      data: JSON.stringify(editedEvent),
+      success: function(response) {
+        $('#unarchiveButton' + eventId).remove();
+        $('#event' + eventId).append('<input type="button" id="archiveButton' + eventId + '" class="submit_btn" onclick="archiveEvent(' + eventId + ')" value="Archive" /> ');
+      },
+      dataType: "json",
+      contentType : "application/json"
+    });
+}
+
+function logout() {
+  window.localStorage.clear();
+  location.reload();
+}
+
+function fillValue(elemt, eventId) {
+  var email = $(elemt).text();
+  $('#shareWith' + eventId).val(email);
+  $('#dropdown-content' + eventId).empty();
+  $('#shareButton' + eventId).show();
+}
+
+function shareEvent(eventId) {
+    var shareEventData = {"eventId": eventId, "attendeeEmail": $('#shareWith' + eventId).val()};
+    $.ajax({
+      type: "POST",
+      url: "attendee",
+      data: JSON.stringify(shareEventData),
+      success: function(response) {
+        $('#shareWith' + eventId).val("");
+      },
+      dataType: "json",
+      contentType : "application/json"
+    });
+}
+
+function searchUser(elemt, eventId) {
+  var email = $(elemt).val();
+  if(email.length > 1) {
+    $.ajax({
+      type: "GET",
+      url: "user?email=" + email,
+      success: function(response) {
+          var userList = JSON.parse(response);
+          if(userList.length != 0) {
+              $('#dropdown-content' + eventId).empty();
+              for (var i = 0, len = userList.length; i < len; ++i) {
+                  var user = userList[i];
+                  $('#dropdown-content' + eventId).append('<a onclick="fillValue(this, ' + eventId + ')">' + user.email + '</a>');
+              }
+              $('#dropdown-content' + eventId).show();
+          } else {
+              $('#dropdown-content' + eventId).empty();
+          }
+      }
+    });
+  }
+  $('#dropdown-content' + eventId).empty();
+}
+
+
+$(document).ready(function() {
+    if(window.localStorage.getItem('email') != null) {
+      $('#createEvent').show();
+      $('#manageEvent').show();
+      $('#archivedEvent').show();
+      $('#logout').show();
+    } else {
+      $('#signIn').show();
+    }
+    $.ajax({
+      type: "GET",
+      url: "event?organiserEmail=" + window.localStorage.getItem('email'),
+      success: function(response) {
+        var eventList = JSON.parse(response);
+        if(eventList.length != 0) {
+            $('#emptyMessage').hide();
+            $('#eventList').append("<h5 style='font-size: 20px;'>Event List</h5>");
+            for (var i = 0, len = eventList.length; i < len; ++i) {
+                var event = eventList[i];
+                var eventDate = new Date(event.date);
+                var today = new Date();
+                var inputButtons = '';
+                if(eventDate < today) {
+                  if(event.archived) {
+                    inputButtons += '<input type="button" id="unarchiveButton' + event.id + '" class="submit_btn" onclick="unarchiveEvent(' + event.id + ')" value="Unarchive" /> ';
+                  } else {
+                    inputButtons += '<input type="button" id="archiveButton' + event.id + '" class="submit_btn" onclick="archiveEvent(' + event.id + ')" value="Archive" /> ';
+                  }
+                } else {
+                    inputButtons += '<input type="button" class="submit_btn" onclick="edit(' + event.id + ')" value="Edit" /> <input type="button" class="submit_btn" onclick="deleteEvent(' + event.id + ')" value="Delete" /> <div class="dropdown"> <input id="shareWith' + event.id + '" type="text" onkeyup="searchUser(this, ' + event.id + ')" placeholder="Share with.." style="font-size: 16px">  <div id="dropdown-content' + event.id + '" class="dropdown-content"> </div> </div> <input type="button" id="shareButton' + event.id + '" class="submit_btn" onclick="shareEvent(' + event.id + ')" style="display: none;" value="Share" />';
+                }
+                $('#eventList').append('<div class="rp_pp" id="event' + event.id + '"> <span>'+ event.title + '</span> <p>' + event.description + '</p> <div class="cleaner"></div> <div>Location: ' + event.location + '  </div> <div>Date: ' + formatDate(eventDate) + '  </div> ' + inputButtons + ' </div> ');
+            }
+        } else {
+            $('#emptyMessage').show();
+        }
+      }
+    });    
+});
+
+
+function formatDate(date) {
+  var monthNames = [
+    "January", "February", "March",
+    "April", "May", "June", "July",
+    "August", "September", "October",
+    "November", "December"
+  ];
+
+  var day = date.getDate();
+  var monthIndex = date.getMonth();
+  var year = date.getFullYear();
+
+  return day + ' ' + monthNames[monthIndex] + ' ' + year;
+}
+
+</script> 
+<style>
+    .alert {
+      padding: 20px;
+      background-color: #f44336;
+      color: white;
+      opacity: 1;
+      transition: opacity 0.6s;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+  .alert.empty {background-color: #09C2D5;}
+
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 204px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+  }
+
+  .dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+  }
+
+  .dropdown-content a:hover {background-color: #ddd;}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="tooplate_wrapper">
+    
+    <div id="tooplate_header">
+        <div id="site_title"><h1><a style="pointer-events: none; cursor: default;" href="#"></a></h1></div>
+        <div id="tooplate_menu" class="ddsmoothmenu">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li id="createEvent" style="display: none"><a href="createEvent.html">Create Event</a></li>
+                <li id="manageEvent" style="display: none"><a href="manageEvent.html">Manage Event</a></li>
+                <li id="archivedEvent" style="display: none"><a href="archivedEvent.html">Archived Event</a></li>
+                <li id="signIn" style="display: none"><a href="signIn.html">Sign In</a></li>
+                <li id="logout" style="display: none; cursor: pointer;" onclick="logout()"><a>Logout</a></li>
+            </ul>
+            <br style="clear: left" />
+        </div>
+    </div>
+    
+    <div id="tooplate_main">
+            
+        <div class="cleaner h30"></div>
+        
+        <div id="eventList">
+            <div id="emptyMessage" class="alert empty" style="display: none;">
+            <strong>Empty!</strong> No events to display.
+            </div>          
+        </div>
+                
+        <div class="cleaner"></div>
+    </div>
+    
+</div>
+
+
+</body>
+</html>

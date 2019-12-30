@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Event Organiser, Create Event</title>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+<link href="css/tooplate_style.css" rel="stylesheet" type="text/css" />
+
+<link rel="stylesheet" type="text/css" href="css/ddsmoothmenu.css" />
+
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/ddsmoothmenu.js"></script>
+
+<script type="text/javascript">
+
+ddsmoothmenu.init({
+	mainmenuid: "tooplate_menu",
+	orientation: 'h',
+	classname: 'ddsmoothmenu',
+	contentsource: "markup"
+})
+
+$(document).ready(function() {
+    if(window.localStorage.getItem('email') != null) {
+      $('#createEvent').show();
+      $('#manageEvent').show();
+      $('#archivedEvent').show();
+      $('#logout').show();
+    } else {
+      $('#signIn').show();
+    }
+});
+
+function logout() {
+  window.localStorage.clear();
+  location.reload();
+}
+
+function create() {
+    var eventFormData = {"title": $('#title').val(), "description": $('#description').val(), "date": $('#date').val(), "location": $('#location').val(), "organiserEmail": window.localStorage.getItem('email')};
+    $.ajax({
+      type: "POST",
+      url: "event",
+      data: JSON.stringify(eventFormData),
+      success: function(response) {
+        $('#title').val("");
+        $('#description').val("");
+        $('#date').val("");
+        $('#location').val("");
+        $('#successMessage').show();
+      },
+      dataType: "json",
+      contentType : "application/json"
+    });
+
+}
+
+</script> 
+
+<style>
+    .alert {
+      padding: 20px;
+      background-color: #f44336;
+      color: white;
+      opacity: 1;
+      transition: opacity 0.6s;
+      margin-bottom: 15px;
+    }
+  .alert.success {background-color: #4CAF50;}
+</style>
+</head>
+
+<body>
+<div id="tooplate_wrapper">
+    
+    <div id="tooplate_header">
+        <div id="site_title"><h1><a style="pointer-events: none; cursor: default;" href="#"></a></h1></div>
+        <div id="tooplate_menu" class="ddsmoothmenu">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li id="createEvent" style="display: none"><a href="createEvent.html">Create Event</a></li>
+                <li id="manageEvent" style="display: none"><a href="manageEvent.html">Manage Event</a></li>
+                <li id="archivedEvent" style="display: none"><a href="archivedEvent.html">Archived Event</a></li>
+                <li id="signIn" style="display: none"><a href="signIn.html">Sign In</a></li>
+                <li id="logout" style="display: none; cursor: pointer;" onclick="logout()"><a>Logout</a></li>
+            </ul>
+            <br style="clear: left" />
+        </div>
+    </div>
+    <div id="tooplate_main">
+        <div id="content" class="float_l">
+            <div id="contact_form">
+               <form id="eventForm" name="eventForm">
+                    
+                    <label for="title">Title:</label> 
+                    <input type="text" id="title" name="title" class="required input_field" />
+                    <div class="cleaner h10"></div>
+
+                    <label for="description">Description:</label> 
+                    <textarea id="description" name="description" rows="0" cols="0" class="required"></textarea>
+                    <div class="cleaner h10"></div>
+
+                    <label for="date">Date:</label> 
+                    <input type="date" id="date" name="date" class="required input_field" />
+                    <div class="cleaner h10"></div>
+                    
+                    <label for="location">Location:</label> 
+                    <input type="text" name="location" id="location" class="input_field" />
+                    <div class="cleaner h10"></div>
+
+                    <div id="successMessage" class="alert success" style="display: none;">
+                    <strong>Success!</strong> Event has been created.
+                    </div>
+
+                    <input type="button" class="submit_btn" onclick="create()" value="Create" />
+                                        
+                </form>
+            </div>
+        </div>
+    </div>
+</div>    
+</body>
+</html>
